@@ -29,7 +29,7 @@ class ParticleFilter
     int m_num_particles;    // TODO: this is not used yet
 
     // Flag, if filter is initialized
-    bool m_is_initialized;
+    bool m_isInitialized;
 
     // Vector of weights of all particles
     std::vector<double> m_weights;  // TODO: not used yet
@@ -62,24 +62,28 @@ public:
      * prediction Predicts the state for the next time step
      *   using the process model.
      * @param delta_t Time between time step t and t+1 in measurements [s]
-     * @param std_pos[] Array of dimension 3 [standard deviation of x [m], standard deviation of y [m]
-     *   standard deviation of yaw [rad]]
+     * @param std_pos[] Array of dimension 3:
+     *      [   standard deviation of x [m], 
+     *          standard deviation of y [m],
+     *          standard deviation of yaw [rad]]
      * @param velocity Velocity of car from t to t+1 [m/s]
      * @param yaw_rate Yaw rate of car from t to t+1 [rad/s]
      */
     void prediction(double delta_t, double std_pos[], double velocity, double yaw_rate);
 
     /**
-     * dataAssociation Finds which observations correspond to which landmarks (likely by using
-     *   a nearest-neighbors data association).
+     * dataAssociation Finds which observations correspond to which landmarks
+     *  (likely by using a nearest-neighbors data association).
      * @param predicted Vector of predicted landmark observations
      * @param observations Vector of landmark observations
      */
-    void dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations);
+    void dataAssociation(
+        std::vector<LandmarkObs> predicted, 
+        std::vector<LandmarkObs>& observations);
 
     /**
-     * updateWeights Updates the weights for each particle based on the likelihood of the
-     *   observed measurements.
+     * updateWeights Updates the weights for each particle based on the
+     *  likelihood of the observed measurements.
      * @param sensor_range Range [m] of sensor
      * @param std_landmark[] Array of dimension 2 [standard deviation of range [m],
      *   standard deviation of bearing [rad]]
@@ -99,8 +103,10 @@ public:
     void resample();
 
     /*
-     * Set a particles list of associations, along with the associations calculated world x,y coordinates
-     * This can be a very useful debugging tool to make sure transformations are correct and assocations correctly connected
+     * Set a particles list of associations, along with the associations
+     * calculated world x,y coordinates.
+     * This can be a very useful debugging tool to make sure transformations
+     * are correct and assocations correctly connected
      */
     Particle SetAssociations(
         Particle particle, 
@@ -115,7 +121,7 @@ public:
     /**
      * initialized Returns whether particle filter is initialized yet or not.
      */
-    const bool initialized() const;
+    const bool isInitialized() const;
 };
 
 #endif /* PARTICLE_FILTER_H_ */

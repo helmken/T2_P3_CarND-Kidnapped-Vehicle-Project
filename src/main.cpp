@@ -31,16 +31,22 @@ std::string hasData(std::string s)
 
 int main()
 {
-    uWS::Hub h;
+    uWS::Hub uwsHub;
 
     //Set up parameters here
     double delta_t = 0.1; // Time elapsed between measurements [sec]
     double sensor_range = 50; // Sensor range [m]
 
-    double sigma_pos[3] = { 0.3, 0.3, 0.01 }; // GPS measurement uncertainty [x [m], y [m], theta [rad]]
-    double sigma_landmark[2] = { 0.3, 0.3 }; // Landmark measurement uncertainty [x [m], y [m]]
+    // GPS measurement uncertainty [x [m], y [m], theta [rad]]
+    double sigma_pos[3] = { 0.3, 0.3, 0.01 };
+    
+    // Landmark measurement uncertainty [x [m], y [m]]
+    double sigma_landmark[2] = { 0.3, 0.3 };
 
     // Read map data
+    // map_data.txt includes the position of landmarks (in meters) on an
+    // arbitrary Cartesian coordinate system. Each row has three columns:
+    // [x_position, y_position, landmark_id]
     Map map;
     if (!read_map_data("../data/map_data.txt", map)) 
     {
@@ -49,11 +55,11 @@ int main()
     }
 
     // Create particle filter
-    ParticleFilter pf;
+    ParticleFilter particleFilter;
 
-    h.onMessage(
-        [&pf, &map, &delta_t, &sensor_range, &sigma_pos, &sigma_landmark]
-        (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) 
+    uwsHub.onMessage(
+        [&particleFilter, &map, &delta_t, &sensor_range, &sigma_pos, &sigma_landmark]
+        (uWS::WebSocket<uWS::SERVER> webSocketServer, char *data, size_t length, uWS::OpCode opCode) 
     {
         // "42" at the start of the message means there's a websocket message event.
         // The 4 signifies a websocket message
@@ -62,7 +68,7 @@ int main()
         if (    length 
             &&  length > 2 
             &&  data[0] == '4' 
-            && data[1] == '2')
+            &&  data[1] == '2')
         {
             auto s = hasData(std::string(data));
             if (s != "") 
@@ -74,14 +80,14 @@ int main()
                 {
                     // j[1] is the data JSON object
 
-                    if (!pf.initialized()) 
+                    if (!particleFilter.isInitialized())
                     {
                         // Sense noisy position data from the simulator
                         double sense_x = std::stod(j[1]["sense_x"].get<std::string>());
                         double sense_y = std::stod(j[1]["sense_y"].get<std::string>());
                         double sense_theta = std::stod(j[1]["sense_theta"].get<std::string>());
 
-                        pf.init(sense_x, sense_y, sense_theta, sigma_pos);
+                        particleFilter.init(sense_x, sense_y, sense_theta, sigma_pos);
                     }
                     else 
                     {
@@ -89,7 +95,7 @@ int main()
                         double previous_velocity = std::stod(j[1]["previous_velocity"].get<std::string>());
                         double previous_yawrate = std::stod(j[1]["previous_yawrate"].get<std::string>());
 
-                        pf.prediction(delta_t, sigma_pos, previous_velocity, previous_yawrate);
+                        particleFilter.prediction(delta_t, sigma_pos, previous_velocity, previous_yawrate);
                     }
 
                     // receive noisy observation data from the simulator
@@ -121,12 +127,12 @@ int main()
                     }
 
                     // Update the weights and resample
-                    pf.updateWeights(sensor_range, sigma_landmark, noisy_observations, map);
-                    pf.resample();
+                    particleFilter.updateWeights(sensor_range, sigma_landmark, noisy_observations, map);
+                    particleFilter.resample();
 
                     // Calculate and output the average weighted error of the 
                     // particle filter over all time steps so far.
-                    vector<Particle> particles = pf.m_particles;
+                    vector<Particle> particles = particleFilter.m_particles;
                     int num_particles = particles.size();   // TODO: ParticleFilter has a member with this name
                     double highest_weight = -1.0;
                     Particle best_particle;
@@ -149,26 +155,28 @@ int main()
                     msgJson["best_particle_theta"] = best_particle.theta;
 
                     //Optional message data used for debugging particle's sensing and associations
-                    msgJson["best_particle_associations"] = pf.getAssociations(best_particle);
-                    msgJson["best_particle_sense_x"] = pf.getSenseX(best_particle);
-                    msgJson["best_particle_sense_y"] = pf.getSenseY(best_particle);
+                    msgJson["best_particle_associations"] = particleFilter.getAssociations(best_particle);
+                    msgJson["best_particle_sense_x"] = particleFilter.getSenseX(best_particle);
+                    msgJson["best_particle_sense_y"] = particleFilter.getSenseY(best_particle);
 
                     auto msg = "42[\"best_particle\"," + msgJson.dump() + "]";
+                    
                     // std::cout << msg << std::endl;
-                    ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+                    
+                    webSocketServer.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
                 }
             }
             else 
             {
                 std::string msg = "42[\"manual\",{}]";
-                ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+                webSocketServer.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
             }
         }
     });
 
     // We don't need this since we're not using HTTP but if it's removed the program
     // doesn't compile :-(
-    h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) 
+    uwsHub.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t)
     {
         const std::string s = "<h1>Hello world!</h1>";
         if (req.getUrl().valueLength == 1)
@@ -182,19 +190,19 @@ int main()
         }
     });
 
-    h.onConnection([&h](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) 
+    uwsHub.onConnection([&uwsHub](uWS::WebSocket<uWS::SERVER> webSocketServer, uWS::HttpRequest req)
     {
         std::cout << "Connected!!!" << std::endl;
     });
 
-    h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code, char *message, size_t length) 
+    uwsHub.onDisconnection([&uwsHub](uWS::WebSocket<uWS::SERVER> webSocketServer, int code, char *message, size_t length)
     {
-        ws.close();
+        webSocketServer.close();
         std::cout << "Disconnected" << std::endl;
     });
 
     int port = 4567;
-    if (h.listen(port))
+    if (uwsHub.listen(port))
     {
         std::cout << "Listening to port " << port << std::endl;
     }
@@ -203,5 +211,5 @@ int main()
         std::cerr << "Failed to listen to port" << std::endl;
         return -1;
     }
-    h.run();
+    uwsHub.run();
 }
