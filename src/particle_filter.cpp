@@ -22,6 +22,7 @@ using namespace std;
 
 // TODO: find a suitable value for number of particles
 // number of particles for the particle filter
+// lesson 13 uses 1000 particles
 const int numberOfParticles(100);
 
 
@@ -43,7 +44,8 @@ void ParticleFilter::init(
     double theta, 
     double std[]) 
 {
-    // param std: GPS measurement uncertainty [x [m], y [m], theta [rad]]
+    // param std: GPS measurement uncertainty: 
+    // standard deviation of [x [m], y [m], theta [rad]]
 
     // TODO: 1) Set the number of particles.
     m_num_particles = numberOfParticles;
@@ -69,16 +71,25 @@ void ParticleFilter::init(
         particle.x = normDistX(randomGenerator);
         particle.y = normDistY(randomGenerator);
         particle.theta = normDistTheta(randomGenerator);
+        
+        // TODO: what's the difference between particle member weight
+        // and the vector of weights?
+        particle.weight = 1.0;  
 
-        printf("particle %i: x=%.3f, y=%.3f, theta=%.3f\n",
-            i, particle.x, particle.y, particle.theta);
+        //printf("particle %i: x=%.3f, y=%.3f, theta=%.3f\n",
+        //    i, particle.x, particle.y, particle.theta);
 
+        // TODO: what's the difference between particle member weight
+        // and the vector of weights?
         m_weights[i] = 1.0;
     }
 
     // TODO: 4) Add random Gaussian noise to each particle.
     // NOTE: Consult particle_filter.h for more information about this method 
     // (and others in this file).
+
+    // TODO: was the random noise added in the for-loop above or hasor has
+    // there still something to be done?
 
     m_isInitialized = true;
 }
@@ -89,12 +100,55 @@ void ParticleFilter::prediction(
     double velocity, 
     double yaw_rate) 
 {
+    // velocity is the previous velocity
+    // yaw rate is the previous yaw rate
+    // param std_pos: GPS measurement uncertainty: 
+    // standard deviation of [x [m], y [m], theta [rad]]
+
+    if (delta_t < 0.001)
+    {
+        printf("prediction: delta_t < 0.001 -> no update");
+        return;
+    }
+
     // TODO: Add measurements to each particle and add random Gaussian noise.
     // NOTE: When adding noise you may find std::normal_distribution and 
     // std::default_random_engine useful.
     //  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
     //  http://www.cplusplus.com/reference/random/default_random_engine/
 
+    default_random_engine randomGenerator;
+
+    for (Particle particle : m_particles)
+    {
+        // update position and orientation
+        const double theta(particle.theta);
+        const double v_x = velocity * cos(theta);
+        const double v_y = velocity * sin(theta);
+
+        const double pred_x = particle.x + v_x * delta_t;
+        const double pred_y = particle.y + v_y * delta_t;
+        const double pred_theta = theta * yaw_rate * delta_t;
+
+        // TODO: it's very likely highly inefficent to create
+        // for each particle normal distributions
+        normal_distribution<double> normDistX(pred_x, std_pos[0]);
+        normal_distribution<double> normDistY(pred_y, std_pos[1]);
+        normal_distribution<double> normDistTheta(pred_theta, std_pos[2]);
+
+        const double rand_x = normDistX(randomGenerator);
+        const double rand_y = normDistY(randomGenerator);
+        const double rand_theta = normDistTheta(randomGenerator);
+
+        printf("prediction: (%.3f, %.3f, %.3f) -> (%.3f, %.3f, %.3f) -> (%.3f, %.3f, %.3f)\n",
+            particle.x, particle.y, particle.theta,
+            pred_x, pred_y, pred_theta,
+            rand_x, rand_y, rand_theta);
+
+        particle.x = rand_x;
+        particle.y = rand_y;
+        particle.theta = rand_theta;
+    }
 }
 
 void ParticleFilter::dataAssociation(

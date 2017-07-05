@@ -9,6 +9,7 @@ set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
 
 set(sources
 	src/helper_functions.h
+	src/helper_functions.cpp
 	src/json.hpp 
 	src/main.cpp
 	src/map.h

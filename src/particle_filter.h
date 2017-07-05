@@ -26,7 +26,7 @@ struct Particle
 class ParticleFilter
 {
     // Number of particles to draw
-    int m_num_particles;    // TODO: this is not used yet
+    int m_num_particles;
 
     // Flag, if filter is initialized
     bool m_isInitialized;
