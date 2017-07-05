@@ -86,4 +86,15 @@ bool read_gt_data(std::string filename, std::vector<ground_truth>& gt);
  */
 bool read_landmark_data(std::string filename, std::vector<LandmarkObs>& observations);
 
+/**
+ * @param vehX, vehY, vehTheta: position and orientation of vehicle in map
+*   coordinates
+ * @param x, y: point in vehicle coordinates
+ * @param mapX, mapY: transformed point in map coordinates
+ */
+void transformVehicleToMapCoord(
+    const double vehX, const double vehY, const double vehTheta,
+    const double x, const double y,
+    double& mapX, double& mapY);
+
 #endif /* HELPER_FUNCTIONS_H_ */
