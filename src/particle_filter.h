@@ -9,35 +9,20 @@
 #ifndef PARTICLE_FILTER_H_
 #define PARTICLE_FILTER_H_
 
-#include "helper_functions.h"
 
-struct Particle
-{
-    int id;
-    double x;
-    double y;
-    double theta;
-    double weight;
-    std::vector<int> associations;
-    std::vector<double> sense_x;
-    std::vector<double> sense_y;
-};
+#include "helper_functions.h"
+#include "particle.h"
+
 
 class ParticleFilter
 {
-    // Number of particles to draw
-    int m_num_particles;
-
     // Flag, if filter is initialized
     bool m_isInitialized;
-
-    // Vector of weights of all particles
-    std::vector<double> m_weights;  // TODO: not used yet
 
 public:
 
     // Set of current particles
-    std::vector<Particle> m_particles;  // TODO: not used yet - maybe private?
+    std::vector<Particle> m_particles;
 
     // Constructor
     ParticleFilter();
@@ -56,7 +41,7 @@ public:
      *      standard deviation of y [m]
      *      standard deviation of yaw [rad]]
      */
-    void init(double x, double y, double theta, double std[]);
+    void init(const double x, const double y, const double theta, const double std[]);
 
     /**
      * prediction Predicts the state for the next time step
@@ -69,7 +54,11 @@ public:
      * @param velocity Velocity of car from t to t+1 [m/s]
      * @param yaw_rate Yaw rate of car from t to t+1 [rad/s]
      */
-    void prediction(double delta_t, double std_pos[], double velocity, double yaw_rate);
+    void prediction(
+        const double delta_t, 
+        const double std_pos[], 
+        const double velocity, 
+        const double yaw_rate);
 
     /**
      * dataAssociation Finds which observations correspond to which landmarks
@@ -78,8 +67,9 @@ public:
      * @param observations Vector of landmark observations
      */
     void dataAssociation(
-        std::vector<LandmarkObs> predicted, 
-        std::vector<LandmarkObs>& observations);
+        const std::vector<LandmarkObs>& predicted,
+        const std::vector<LandmarkObs>& observations,
+        std::vector<LandmarkObs>& nearestNeighbors);
 
     /**
      * updateWeights Updates the weights for each particle based on the
@@ -91,10 +81,10 @@ public:
      * @param map Map class containing map landmarks
      */
     void updateWeights(
-        double sensor_range, 
-        double std_landmark[], 
-        std::vector<LandmarkObs> observations,
-        Map map_landmarks);
+        const double sensor_range,
+        const double std_landmark[],
+        const std::vector<LandmarkObs>& observations,
+        const Map& map_landmarks);
 
     /**
      * resample Resamples from the updated set of particles to form
@@ -104,7 +94,7 @@ public:
 
     /*
      * Set a particles list of associations, along with the associations
-     * calculated world x,y coordinates.
+     * calculated world (x, y) coordinates.
      * This can be a very useful debugging tool to make sure transformations
      * are correct and assocations correctly connected
      */

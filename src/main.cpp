@@ -37,10 +37,12 @@ int main()
     double delta_t = 0.1; // Time elapsed between measurements [sec]
     double sensor_range = 50; // Sensor range [m]
 
-    // GPS measurement uncertainty [x [m], y [m], theta [rad]]
+    // GPS measurement uncertainty [x [m], y [m], theta [rad]] 
+    // (standard deviation of GPS measurements)
     double sigma_pos[3] = { 0.3, 0.3, 0.01 };
     
-    // Landmark measurement uncertainty [x [m], y [m]]
+    // Landmark measurement uncertainty [x [m], y [m]] 
+    // (standard deviation of landmark measurements)
     double sigma_landmark[2] = { 0.3, 0.3 };
 
     // Read map data
@@ -65,8 +67,7 @@ int main()
         // The 4 signifies a websocket message
         // The 2 signifies a websocket event
 
-        if (    length 
-            &&  length > 2 
+        if (    length > 2 
             &&  data[0] == '4' 
             &&  data[1] == '2')
         {
@@ -107,16 +108,16 @@ int main()
                     std::vector<float> x_sense;
                     std::istringstream iss_x(sense_observations_x);
 
-                    std::copy(std::istream_iterator<float>(iss_x),
-                        std::istream_iterator<float>(),
-                        std::back_inserter(x_sense));
+                    std::copy(  std::istream_iterator<float>(iss_x),
+                                std::istream_iterator<float>(),
+                                std::back_inserter(x_sense));
 
                     std::vector<float> y_sense;
                     std::istringstream iss_y(sense_observations_y);
 
-                    std::copy(std::istream_iterator<float>(iss_y),
-                        std::istream_iterator<float>(),
-                        std::back_inserter(y_sense));
+                    std::copy(  std::istream_iterator<float>(iss_y),
+                                std::istream_iterator<float>(),
+                                std::back_inserter(y_sense));
 
                     for (int i = 0; i < x_sense.size(); i++)
                     {
@@ -133,7 +134,7 @@ int main()
                     // Calculate and output the average weighted error of the 
                     // particle filter over all time steps so far.
                     vector<Particle> particles = particleFilter.m_particles;
-                    int num_particles = particles.size();   // TODO: ParticleFilter has a member with this name
+                    int num_particles = particles.size(); 
                     double highest_weight = -1.0;
                     Particle best_particle;
                     double weight_sum = 0.0;
@@ -146,8 +147,9 @@ int main()
                         }
                         weight_sum += particles[i].weight;
                     }
-                    cout << "highest w " << highest_weight << endl;
-                    cout << "average w " << weight_sum / num_particles << endl;
+                    //cout << "highest w " << highest_weight << endl;
+                    //cout << "average w " << weight_sum / num_particles << endl;
+                    //printf("main: best particle: id=%i (%.3f, %.3f)\n", best_particle.id, best_particle.x, best_particle.y);
 
                     json msgJson;
                     msgJson["best_particle_x"] = best_particle.x;

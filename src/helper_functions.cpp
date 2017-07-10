@@ -1,5 +1,5 @@
 #include "helper_functions.h"
-
+#include <limits>
 
 /*
  * Computes the Euclidean distance between two 2D points.
@@ -7,27 +7,9 @@
  * @param (x2, y2) x and y coordinates of second point
  * @output Euclidean distance between two 2D points
  */
-double dist(double x1, double y1, double x2, double y2) 
+double dist(const double x1, const double y1, const double x2, const double y2)
 {
     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-}
-
-double* getError(
-    double gt_x, double gt_y, double gt_theta, 
-    double pf_x, double pf_y, double pf_theta) 
-{
-    static double error[3];
-    error[0] = fabs(pf_x - gt_x);
-    error[1] = fabs(pf_y - gt_y);
-    error[2] = fabs(pf_theta - gt_theta);
-    error[2] = fmod(error[2], 2.0 * M_PI);
-    
-    if (error[2] > M_PI) 
-    {
-        error[2] = 2.0 * M_PI - error[2];
-    }
-    
-    return error;
 }
 
 /* Reads map data from a file.
@@ -62,16 +44,15 @@ bool read_map_data(std::string filename, Map& map)
         iss_map >> landmark_y_f;
         iss_map >> id_i;
 
-        // Declare single_landmark:
-        Map::single_landmark_s single_landmark_temp;
+        Map::single_landmark_s single_landmark;
 
         // Set values
-        single_landmark_temp.id_i = id_i;
-        single_landmark_temp.x_f = landmark_x_f;
-        single_landmark_temp.y_f = landmark_y_f;
+        single_landmark.id_i = id_i;
+        single_landmark.x_f = landmark_x_f;
+        single_landmark.y_f = landmark_y_f;
 
         // Add to landmark list of map:
-        map.landmark_list.push_back(single_landmark_temp);
+        map.landmark_list.push_back(single_landmark);
     }
 
     return true;
@@ -209,13 +190,4 @@ bool read_landmark_data(std::string filename, std::vector<LandmarkObs>& observat
     }
 
     return true;
-}
-
-void transformVehicleToMapCoord(
-    const double vehX, const double vehY, const double vehTheta,
-    const double x, const double y,
-    double& mapX, double& mapY)
-{
-    mapX = vehX + x * cos(vehTheta) + y * sin(vehTheta);
-    mapY = vehY - x * sin(vehTheta) + y * cos(vehTheta);
 }

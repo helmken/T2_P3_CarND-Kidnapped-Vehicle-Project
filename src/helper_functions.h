@@ -15,6 +15,8 @@
 #include <math.h>
 #include <vector>
 #include "map.h"
+#include "particle.h"
+
 
  /*
   * Struct representing one position/control measurement.
@@ -48,6 +50,13 @@ struct LandmarkObs
 
     // Local (vehicle coordinates) y position of landmark observation [m]
     double y;
+
+    LandmarkObs()
+    {};
+
+    LandmarkObs(int id, double x, double y)
+        : id(id), x(x), y(y)
+    {};
 };
 
 /*
@@ -56,11 +65,7 @@ struct LandmarkObs
  * @param (x2, y2) x and y coordinates of second point
  * @output Euclidean distance between two 2D points
  */
-double dist(double x1, double y1, double x2, double y2);
-
-double* getError(
-    double gt_x, double gt_y, double gt_theta,
-    double pf_x, double pf_y, double pf_theta);
+double dist(const double x1, const double y1, const double x2, const double y2);
 
 /* Reads map data from a file.
  * @param filename Name of file containing map data.
@@ -85,16 +90,5 @@ bool read_gt_data(std::string filename, std::vector<ground_truth>& gt);
  * @output True if opening and reading file was successful
  */
 bool read_landmark_data(std::string filename, std::vector<LandmarkObs>& observations);
-
-/**
- * @param vehX, vehY, vehTheta: position and orientation of vehicle in map
-*   coordinates
- * @param x, y: point in vehicle coordinates
- * @param mapX, mapY: transformed point in map coordinates
- */
-void transformVehicleToMapCoord(
-    const double vehX, const double vehY, const double vehTheta,
-    const double x, const double y,
-    double& mapX, double& mapY);
 
 #endif /* HELPER_FUNCTIONS_H_ */

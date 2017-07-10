@@ -13,6 +13,7 @@ set(sources
 	src/json.hpp 
 	src/main.cpp
 	src/map.h
+	src/particle.h
 	src/particle_filter.cpp 
 	src/particle_filter.h 
 )
